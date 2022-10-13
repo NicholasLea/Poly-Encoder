@@ -96,6 +96,8 @@ def eval_running_model(dataloader, test=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     ## Required parameters
+    # 'store_true' and 'store_false' - These are special cases of 'store_const' used for storing the values True and False respectively.
+    # https://docs.python.org/3/library/argparse.html
     parser.add_argument("--bert_model", default='ckpt/pretrained/bert-small-uncased', type=str)
     parser.add_argument("--eval", action="store_true")
     parser.add_argument("--model_type", default='bert', type=str)
@@ -148,6 +150,7 @@ if __name__ == '__main__':
     ConfigClass, TokenizerClass, BertModelClass = MODEL_CLASSES[args.model_type]
 
     ## init dataset and bert model
+    # 这里tokenizer还有另外一种写法，直接从Hugging Face下载的，在coref-hoi里用到的！
     tokenizer = TokenizerClass.from_pretrained(os.path.join(args.bert_model, "vocab.txt"), do_lower_case=True, clean_text=False)
     context_transform = SelectionJoinTransform(tokenizer=tokenizer, max_len=args.max_contexts_length)
     response_transform = SelectionSequentialTransform(tokenizer=tokenizer, max_len=args.max_response_length)
@@ -161,10 +164,17 @@ if __name__ == '__main__':
     if not args.eval:
         train_dataset = SelectionDataset(os.path.join(args.train_dir, 'train.txt'),
                                                                       context_transform, response_transform, concat_transform, sample_cnt=None, mode=args.architecture)
+        # 这里只采样了1000个进行dev
         val_dataset = SelectionDataset(os.path.join(args.train_dir, 'dev.txt'),
                                                                   context_transform, response_transform, concat_transform, sample_cnt=1000, mode=args.architecture)
         train_dataloader = DataLoader(train_dataset, batch_size=args.train_batch_size, collate_fn=train_dataset.batchify_join_str, shuffle=True, num_workers=0)
+
+        print('---training number---')
+        print('train_dataloader:', len(train_dataloader))
+        print('args.gradient_accumulation_steps:', args.gradient_accumulation_steps)
+        print('args.num_train_epochs:', args.num_train_epochs)
         t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
+        print('t_total:', t_total)
     else: # test
         val_dataset = SelectionDataset(os.path.join(args.train_dir, 'test.txt'),
                                                                   context_transform, response_transform, concat_transform, sample_cnt=None, mode=args.architecture)
@@ -174,7 +184,7 @@ if __name__ == '__main__':
 
     epoch_start = 1
     global_step = 0
-    best_eval_loss = float('inf')
+    best_eval_loss = float('inf') # inf还可以这样弄
     best_test_loss = float('inf')
 
     if not os.path.exists(args.output_dir):
@@ -182,18 +192,22 @@ if __name__ == '__main__':
     shutil.copyfile(os.path.join(args.bert_model, 'vocab.txt'), os.path.join(args.output_dir, 'vocab.txt'))
     shutil.copyfile(os.path.join(args.bert_model, 'config.json'), os.path.join(args.output_dir, 'config.json'))
     log_wf = open(os.path.join(args.output_dir, 'log.txt'), 'a', encoding='utf-8')
-    print (args, file=log_wf)
+    print(args, file=log_wf)
 
     state_save_path = os.path.join(args.output_dir, '{}_{}_pytorch_model.bin'.format(args.architecture, args.poly_m))
+    print('state_save_path:', state_save_path)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print('torch.cuda.is_available()',torch.cuda.is_available())
+    print('device:', device)
 
     ########################################
     ## build BERT encoder
     ########################################
     bert_config = ConfigClass.from_json_file(os.path.join(args.bert_model, 'config.json'))
+    # print('bert_config:', bert_config)
     if args.use_pretrain and not args.eval:
         previous_model_file = os.path.join(args.bert_model, "pytorch_model.bin")
-        print('Loading parameters from', previous_model_file)
+        print('Loading parameters from:', previous_model_file)
         log_wf.write('Loading parameters from %s' % previous_model_file + '\n')
         model_state_dict = torch.load(previous_model_file, map_location="cpu")
         bert = BertModelClass.from_pretrained(args.bert_model, state_dict=model_state_dict)

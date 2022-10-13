@@ -51,19 +51,19 @@
 1. Train a **Bi-Encoder**:
 
    ```shell
-   python3 run.py --bert_model bert_model/ --output_dir output_dstc7/ --train_dir dstc7/ --use_pretrain --architecture bi
+   python run.py --bert_model bert_model/ --output_dir output_dstc7/ --train_dir dstc7/ --use_pretrain --architecture bi
    ```
 
 2. Train a **Poly-Encoder** with 16 codes:
 
    ```shell
-   python3 run.py --bert_model bert_model/ --output_dir output_dstc7/ --train_dir dstc7/ --use_pretrain --architecture poly --poly_m 16
+   python run.py --bert_model bert_model/ --output_dir output_dstc7/ --train_dir dstc7/ --use_pretrain --architecture poly --poly_m 16
    ```
 
 3. Train a **Cross-Encoder**:
 
    ```shell
-   python3 run.py --bert_model bert_model/ --output_dir output_dstc7/ --train_dir dstc7/ --use_pretrain --architecture cross
+   python run.py --bert_model bert_model/ --output_dir output_dstc7/ --train_dir dstc7/ --use_pretrain --architecture cross
    ```
 
 4. Simply change the name of directories to ubuntu and run experiments on the ubuntu dataset.
