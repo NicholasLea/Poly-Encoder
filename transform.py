@@ -8,7 +8,7 @@ class SelectionSequentialTransform(object):
         input_ids_list, segment_ids_list, input_masks_list, contexts_masks_list = [], [], [], []
         for text in texts: # 这类的texts就是response的list
             # 我还是比较喜欢这种返回的对象赋值给一个单一的变量，然后再从这个变量里去取的这种方式
-            tokenized_dict = self.tokenizer.encode_plus(text, max_length=self.max_len, pad_to_max_length=True)
+            tokenized_dict = self.tokenizer.encode_plus(text, max_length=self.max_len, pad_to_max_length=True, truncation=True)
             input_ids, input_masks = tokenized_dict['input_ids'], tokenized_dict['attention_mask']
             assert len(input_ids) == self.max_len
             assert len(input_masks) == self.max_len

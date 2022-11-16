@@ -45,7 +45,7 @@ def eval_running_model(dataloader, test=False):
                 loss = F.cross_entropy(logits, torch.argmax(labels_batch, 1))
         else:
             context_token_ids_list_batch, context_input_masks_list_batch, \
-            response_token_ids_list_batch, response_input_masks_list_batch, labels_batch = batch
+            response_token_ids_list_batch, response_input_masks_list_batch, labels_batch = batch #先解包，这个还蛮不错的
             with torch.no_grad():
                 logits = model(context_token_ids_list_batch, context_input_masks_list_batch,
                                               response_token_ids_list_batch, response_input_masks_list_batch)
@@ -108,8 +108,8 @@ if __name__ == '__main__':
     parser.add_argument("--architecture", required=True, type=str, help='[poly, bi, cross]')
 
     parser.add_argument("--max_contexts_length", default=128, type=int)
-    parser.add_argument("--max_response_length", default=32, type=int)
-    parser.add_argument("--train_batch_size", default=32, type=int, help="Total batch size for training.")
+    parser.add_argument("--max_response_length", default=32, type=int) #改成33，以方便观察，原值32
+    parser.add_argument("--train_batch_size", default=32, type=int, help="Total batch size for training.") #改成31，以方便观察，原值32
     parser.add_argument("--eval_batch_size", default=32, type=int, help="Total batch size for eval.")
     parser.add_argument("--print_freq", default=100, type=int, help="Log frequency")
 
@@ -272,6 +272,11 @@ if __name__ == '__main__':
                 else:
                     context_token_ids_list_batch, context_input_masks_list_batch, \
                     response_token_ids_list_batch, response_input_masks_list_batch, labels_batch = batch
+                    # print('context_token_ids_list_batch.shape', context_token_ids_list_batch.shape)
+                    # print('context_input_masks_list_batch.shape', context_input_masks_list_batch.shape)
+                    # print('response_token_ids_list_batch.shape', response_token_ids_list_batch.shape)
+                    # print('response_input_masks_list_batch.shape', response_input_masks_list_batch.shape)
+
                     loss = model(context_token_ids_list_batch, context_input_masks_list_batch,
                                           response_token_ids_list_batch, response_input_masks_list_batch,
                                           labels_batch)
@@ -328,6 +333,7 @@ if __name__ == '__main__':
             best_eval_loss = val_result['eval_loss']
             val_result['best_eval_loss'] = best_eval_loss
             # save model
+            # 它这里的自动存储用的居然是测试数据的loss，即cross_entropy
             print('[Saving at]', state_save_path)
             log_wf.write('[Saving at] %s\n' % state_save_path)
             torch.save(model.state_dict(), state_save_path)
